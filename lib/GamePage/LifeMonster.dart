@@ -1,3 +1,4 @@
+
 import 'package:flame/components.dart';
 import 'game.dart';
 
@@ -30,6 +31,6 @@ class LifeMonster extends SpriteAnimationComponent
   }
 
   void movePlayer(double delta) {
-    position.add(Vector2(0, delta * 5));
+    position.add(Vector2(delta * 5, 0));
   }
 }

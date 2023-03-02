@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
-import 'package:lifemon/game.dart';
-import '../game.dart';
+import 'package:lifemon/GamePage/game.dart';
+import 'game.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
@@ -21,6 +21,13 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    return GameWidget(game: _game);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: 544,
+        height: 232,
+        child: GameWidget(game: _game),
+      ),
+    );
   }
 }
