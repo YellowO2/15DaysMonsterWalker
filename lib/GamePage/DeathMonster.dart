@@ -4,19 +4,17 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'game.dart';
-import 'package:flame/collisions.dart';
 
-class LifeMonster extends SpriteAnimationComponent
+class DeathMonster extends SpriteAnimationComponent
     with HasGameRef<MonsterGame> {
   double _speed = 100; // pixels per second
   Vector2 _direction = Vector2(1, 0); // start moving right
 
-  LifeMonster() : super(size: Vector2.all(50.0));
+  DeathMonster() : super(size: Vector2.all(50.0));
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    add(RectangleHitbox());
     animation = SpriteAnimation.fromFrameData(
       game.images.fromCache('monsterNull.png'),
       SpriteAnimationData.sequenced(
