@@ -23,7 +23,7 @@ class AttackBox extends PositionComponent {
   final String type;
   final int damage = 1;
   RectangleHitbox hitBox =
-      RectangleHitbox(size: Vector2(20, 20), anchor: Anchor.bottomCenter)
+      RectangleHitbox(size: Vector2(0, 20), anchor: Anchor.bottomCenter)
         ..collisionType = CollisionType.passive;
   void changeSize(double newSize) {
     hitBox.size = Vector2(newSize, 20);
@@ -44,7 +44,7 @@ class Monster extends SpriteAnimationGroupComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {
   final String type;
   double _speed = 100; // pixels per second
-  Vector2 _direction = Vector2(1, 0); // start moving right
+  Vector2 _direction = Vector2(-1, 0); // start moving right
   bool combatState = false;
   int hitPoint = 10;
 
@@ -68,10 +68,11 @@ class Monster extends SpriteAnimationGroupComponent
   Future<void> onLoad() async {
     super.onLoad();
     //load sprites
-    AttackBox attackBox = AttackBox(type);
-    detectBox = DetectionBox(type, setCombatState);
+    attackBox = await AttackBox(type);
+    detectBox = await DetectionBox(type, setCombatState);
     add(detectBox);
     add(attackBox);
+    add(RectangleHitbox());
 
     final running = await game.images.fromCache('monsterNull.png');
     final attack = await gameRef.images.load('monsterNull.png');
@@ -100,11 +101,14 @@ class Monster extends SpriteAnimationGroupComponent
   double attackTime = 0.0;
   @override
   void update(double delta) {
-    attackTime += delta;
     super.update(delta);
+    attackTime += delta;
     wander(delta);
     if (combatState == true) {
       Combat(attackTime);
+    }
+    if (hitPoint < 0) {
+      this.removeFromParent();
     }
   }
 
@@ -119,7 +123,6 @@ class Monster extends SpriteAnimationGroupComponent
     } else if (other is AttackBox) {
       if (other.type != type) {
         hitPoint -= other.damage;
-        print('hp');
         print(hitPoint);
       }
     }
@@ -135,8 +138,13 @@ class Monster extends SpriteAnimationGroupComponent
   void wander(double delta) {
     // Randomly change direction every second
     if (Random().nextInt(100) < 1) {
-      _direction = Vector2(Random().nextDouble() * 2 - 1, 0);
-      flipHorizontally();
+      final newX = Random().nextDouble() * 2 - 1;
+      if (_direction.x > 0 && newX < 0) {
+        flipHorizontally();
+      } else if (_direction.x < 0 && newX > 0) {
+        flipHorizontally();
+      }
+      _direction = Vector2(newX, 0);
     }
 
     // Update position based on direction and speed
@@ -157,16 +165,10 @@ class Monster extends SpriteAnimationGroupComponent
     _direction = Vector2(0, 0);
     if (attackTime > _attackSpeed) {
       attackBox.changeSize(200);
+      print('attack change');
       // attackBox.size = Vector2(0, 0);
       attackTime = 0;
     }
+    // attackBox.changeSize(0);
   }
-  //   void Combat() {
-
-  //   Async.Timer _attackTimer = Async.Timer.periodic(Duration(milliseconds: 500), (timer) {
-  //     // Toggle the size of the attack hitbox
-  //     attackBox.size = attackBox.size.x == 0 ? Vector2(200, 100) : Vector2(0, 0);
-  //   });
-
-  // }
 }
