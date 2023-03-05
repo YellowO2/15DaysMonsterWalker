@@ -23,6 +23,7 @@ class LifePlant extends SpriteAnimationComponent with HasGameRef<MonsterGame> {
       ),
     );
     position = gameRef.size / 2;
+    position.y = game.groundLevel.toDouble();
   }
 
   @override

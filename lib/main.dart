@@ -36,13 +36,9 @@ class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
     void _onItemTapped(int index) {
-      print('tapped');
-      print(index);
-      print('index');
       setState(() {
         _selectedIndex = index;
       });
-      print(_selectedIndex);
     }
 
     return MaterialApp(
@@ -52,7 +48,7 @@ class _MainAppState extends State<MainApp> {
         ),
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: Color.fromARGB(0, 251, 251, 251),
-          items: [
+          items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',

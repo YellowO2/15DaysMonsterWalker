@@ -24,8 +24,8 @@ class _GamePageState extends State<GamePage> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SizedBox(
-        width: 544,
-        height: 232,
+        width: 1084 * 1.3,
+        height: 232 * 1.3,
         child: GameWidget(game: _game),
       ),
     );
