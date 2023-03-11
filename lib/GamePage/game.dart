@@ -15,20 +15,18 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
       'parallax-mountain-invert.png',
       'monsterNull.png',
       'lifePlant.png',
-      'DeathMonster0-Idle.png'
+      'DeathMonster0.png'
     ]);
     final LifeMonster _lifeMonster = LifeMonster();
-    final LifeMonster _lifeMonster2 = LifeMonster();
     final DeathMonster _deathMonster = DeathMonster();
     final GameBackground _gameBackground = GameBackground();
     final LifePlant _lifePlant = LifePlant();
+    final LifePlant _lifePlant2 = LifePlant(position: Vector2(800, 100));
 
     add(_lifeMonster);
-    add(_lifeMonster2);
     add(_deathMonster);
     add(_gameBackground);
     add(_lifePlant);
-
-    // empty
+    add(_lifePlant2);
   }
 }

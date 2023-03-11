@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:async' as asyncTimer;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -8,8 +9,7 @@ import 'package:flame/collisions.dart';
 
 class DetectionBox extends PositionComponent {
   final String type;
-  final Function onCollide;
-  DetectionBox(this.type, this.onCollide);
+  DetectionBox(this.type);
 
   Future<void> onLoad() async {
     add(RectangleHitbox(size: Vector2(100, 100))
@@ -19,37 +19,40 @@ class DetectionBox extends PositionComponent {
 
 class AttackBox extends PositionComponent {
   AttackBox(this.type);
-  double size_x = 0;
   final String type;
   final int damage = 1;
   RectangleHitbox hitBox =
-      RectangleHitbox(size: Vector2(0, 20), anchor: Anchor.bottomCenter)
+      RectangleHitbox(size: Vector2(200, 20), anchor: Anchor.bottomCenter)
         ..collisionType = CollisionType.passive;
-  void changeSize(double newSize) {
-    hitBox.size = Vector2(newSize, 20);
-  }
-
   Future<void> onLoad() async {
     add(hitBox);
   }
 
-  @override
-  void update(double dt) {
-    // TODO: implement update
-    super.update(dt);
+  void removeAttackBox() {
+    this.removeFromParent();
   }
 }
 
 class Monster extends SpriteAnimationGroupComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {
   final String type;
-  double _speed = 100; // pixels per second
-  Vector2 _direction = Vector2(-1, 0); // start moving right
+  double speed = 100; // pixels per second
+  Vector2 direction = Vector2(1, 0); // start moving right
   bool combatState = false;
   int hitPoint = 10;
+  late DetectionBox detectBox;
+  late AttackBox attackBox;
+  double attackSpeed;
+  int attackNumber;
+  final String monsterAnimationPath;
 
-  Monster({required this.type})
+  Monster(
+      {required this.type,
+      required this.monsterAnimationPath,
+      this.attackSpeed = 2,
+      this.attackNumber = 2})
       : super(size: Vector2.all(100.0), anchor: Anchor.center);
+
   void setCombatState(bool state) {
     if (state) {
       current = 3;
@@ -59,37 +62,32 @@ class Monster extends SpriteAnimationGroupComponent
     combatState = state;
   }
 
-  // bool hasDirectionChanged = true;
-  late DetectionBox detectBox;
-  late AttackBox attackBox;
-  double _attackSpeed = 1;
-
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    //load sprites
-    attackBox = await AttackBox(type);
-    detectBox = await DetectionBox(type, setCombatState);
+    detectBox = await DetectionBox(type);
     add(detectBox);
-    add(attackBox);
+    attackBox = AttackBox(type);
+    // add(attackBox);
     add(RectangleHitbox());
 
-    final running = await game.images.fromCache('monsterNull.png');
-    final attack = await gameRef.images.load('monsterNull.png');
+    final running = await gameRef.images.load('$monsterAnimationPath.png');
+    final attack =
+        await gameRef.images.load('$monsterAnimationPath-attack.png');
     final runningAnimation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('monsterNull.png'),
+      running,
       SpriteAnimationData.sequenced(
         amount: 2,
         textureSize: Vector2.all(128),
-        stepTime: 0.12,
+        stepTime: 0.2,
       ),
     );
     final attackAnimation = SpriteAnimation.fromFrameData(
       attack,
       SpriteAnimationData.sequenced(
-        amount: 5,
+        amount: attackNumber,
         textureSize: Vector2.all(128),
-        stepTime: 0.2,
+        stepTime: attackSpeed / attackNumber,
       ),
     );
     animations = {1: runningAnimation, 2: runningAnimation, 3: attackAnimation};
@@ -105,25 +103,23 @@ class Monster extends SpriteAnimationGroupComponent
     attackTime += delta;
     wander(delta);
     if (combatState == true) {
-      Combat(attackTime);
-    }
-    if (hitPoint < 0) {
-      this.removeFromParent();
+      direction = Vector2(0, 0);
     }
   }
 
   @override
-  void onCollision(Set<Vector2> points, PositionComponent other) {
-    print('collide');
-    if (other is DetectionBox) {
-      print('detect');
+  void onCollisionStart(Set<Vector2> points, PositionComponent other) {
+    if (other is Monster) {
       if (other.type != type) {
-        other.onCollide(true);
+        combat();
       }
     } else if (other is AttackBox) {
       if (other.type != type) {
         hitPoint -= other.damage;
-        print(hitPoint);
+        other.removeAttackBox();
+        if (hitPoint < 0) {
+          this.removeFromParent();
+        }
       }
     }
   }
@@ -131,7 +127,7 @@ class Monster extends SpriteAnimationGroupComponent
   @override
   void onCollisionEnd(PositionComponent other) {
     if (other is DetectionBox) {
-      other.onCollide(false);
+      exitCombat();
     }
   }
 
@@ -139,36 +135,41 @@ class Monster extends SpriteAnimationGroupComponent
     // Randomly change direction every second
     if (Random().nextInt(100) < 1) {
       final newX = Random().nextDouble() * 2 - 1;
-      if (_direction.x > 0 && newX < 0) {
+      if (direction.x > 0 && newX < 0) {
         flipHorizontally();
-      } else if (_direction.x < 0 && newX > 0) {
+      } else if (direction.x < 0 && newX > 0) {
         flipHorizontally();
       }
-      _direction = Vector2(newX, 0);
+      direction = Vector2(newX, 0);
     }
 
     // Update position based on direction and speed
-    position += _direction * _speed * delta;
+    position += direction * speed * delta;
 
     // Reverse direction if monster reaches screen edge
     if (position.x < 0) {
-      _direction = Vector2(1, 0);
+      direction = Vector2(1, 0);
       flipHorizontally();
     } else if (position.x > gameRef.size.x) {
       // position = position.withX(gameRef.size.x);
-      _direction = Vector2(-1, 0);
+      direction = Vector2(-1, 0);
       flipHorizontally();
     }
   }
 
-  void Combat(double attackTime) {
-    _direction = Vector2(0, 0);
-    if (attackTime > _attackSpeed) {
-      attackBox.changeSize(200);
-      print('attack change');
-      // attackBox.size = Vector2(0, 0);
-      attackTime = 0;
-    }
-    // attackBox.changeSize(0);
+  late asyncTimer.Timer timer;
+  void combat() async {
+    timer = asyncTimer.Timer.periodic(Duration(seconds: attackSpeed.toInt()),
+        (timer) {
+      add(attackBox);
+      setCombatState(true);
+      print(type);
+      print(hitPoint);
+    });
+  }
+
+  void exitCombat() {
+    setCombatState(false);
+    timer.cancel();
   }
 }
