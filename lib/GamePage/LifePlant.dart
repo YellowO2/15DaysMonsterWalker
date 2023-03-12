@@ -39,6 +39,6 @@ class LifePlant extends SpriteAnimationComponent
 
   @override
   void onCollisionStart(Set<Vector2> points, PositionComponent other) {
-    print(other);
+    // print(other);
   }
 }

@@ -10,6 +10,9 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
   final groundLevel = 200;
 
   @override
+  bool debugMode = true;
+
+  @override
   Future<void> onLoad() async {
     await images.loadAll([
       'parallax-mountain-invert.png',
@@ -18,10 +21,11 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
       'DeathMonster0.png'
     ]);
     final LifeMonster _lifeMonster = LifeMonster();
-    final DeathMonster _deathMonster = DeathMonster();
+    final DeathMonster _deathMonster =
+        DeathMonster(position: Vector2(1100, 100));
     final GameBackground _gameBackground = GameBackground();
     final LifePlant _lifePlant = LifePlant();
-    final LifePlant _lifePlant2 = LifePlant(position: Vector2(800, 100));
+    final LifePlant _lifePlant2 = LifePlant(position: Vector2(1100, 100));
 
     add(_lifeMonster);
     add(_deathMonster);

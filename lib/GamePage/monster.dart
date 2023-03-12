@@ -2,18 +2,33 @@ import 'dart:math';
 import 'dart:async' as asyncTimer;
 
 import 'package:flame/components.dart';
-import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import 'game.dart';
 import 'package:flame/collisions.dart';
+import 'package:flutter/material.dart';
 
-class DetectionBox extends PositionComponent {
+class DetectionBox extends RectangleHitbox {
   final String type;
-  DetectionBox(this.type);
 
+  DetectionBox(this.type)
+      : super(size: Vector2(400, 50), position: Vector2(-150, 0));
+
+  @override
   Future<void> onLoad() async {
-    add(RectangleHitbox(size: Vector2(100, 100))
-      ..collisionType = CollisionType.passive);
+    super.onLoad();
+    collisionType = CollisionType.passive;
+  }
+}
+
+class AttackRangeBox extends RectangleHitbox {
+  final String type;
+  AttackRangeBox({required this.type, Vector2? attackRange})
+      : super(size: attackRange ?? Vector2(50, 50));
+
+  @override
+  Future<void> onLoad() async {
+    super.onLoad();
+    position = Vector2(50, 50);
+    collisionType = CollisionType.passive;
   }
 }
 
@@ -22,7 +37,7 @@ class AttackBox extends PositionComponent {
   final String type;
   final int damage = 1;
   RectangleHitbox hitBox =
-      RectangleHitbox(size: Vector2(200, 20), anchor: Anchor.bottomCenter)
+      RectangleHitbox(size: Vector2(50, 20), position: Vector2(50, 50))
         ..collisionType = CollisionType.passive;
   Future<void> onLoad() async {
     add(hitBox);
@@ -38,20 +53,29 @@ class Monster extends SpriteAnimationGroupComponent
   final String type;
   double speed = 100; // pixels per second
   Vector2 direction = Vector2(1, 0); // start moving right
-  bool combatState = false;
+  bool isLeft = false;
   int hitPoint = 10;
-  late DetectionBox detectBox;
-  late AttackBox attackBox;
+  late DetectionBox detectBox = DetectionBox(type);
+  RectangleHitbox hitbox = RectangleHitbox(size: Vector2(100, 100));
   double attackSpeed;
   int attackNumber;
   final String monsterAnimationPath;
+  bool withinAttackRange = false;
+  Vector2? attackRange;
+  late AttackRangeBox attackRangeBox =
+      AttackRangeBox(type: type, attackRange: attackRange);
 
   Monster(
       {required this.type,
       required this.monsterAnimationPath,
       this.attackSpeed = 2,
-      this.attackNumber = 2})
-      : super(size: Vector2.all(100.0), anchor: Anchor.center);
+      this.attackNumber = 2,
+      this.attackRange,
+      Vector2? position})
+      : super(
+            size: Vector2.all(100.0),
+            anchor: Anchor.center,
+            position: position);
 
   void setCombatState(bool state) {
     if (state) {
@@ -59,17 +83,14 @@ class Monster extends SpriteAnimationGroupComponent
     } else {
       current = 1;
     }
-    combatState = state;
   }
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    detectBox = await DetectionBox(type);
     add(detectBox);
-    attackBox = AttackBox(type);
-    // add(attackBox);
-    add(RectangleHitbox());
+    add(hitbox);
+    add(attackRangeBox);
 
     final running = await gameRef.images.load('$monsterAnimationPath.png');
     final attack =
@@ -92,18 +113,24 @@ class Monster extends SpriteAnimationGroupComponent
     );
     animations = {1: runningAnimation, 2: runningAnimation, 3: attackAnimation};
     current = 1;
-    position = gameRef.size / 2;
+    // position = gameRef.size / 2;
     position.y = game.groundLevel.toDouble() + 5.0;
   }
 
-  double attackTime = 0.0;
   @override
   void update(double delta) {
     super.update(delta);
-    attackTime += delta;
     wander(delta);
-    if (combatState == true) {
-      direction = Vector2(0, 0);
+    if (direction.x < 0) {
+      if (!isLeft) {
+        flipHorizontally();
+        isLeft = true;
+      }
+    } else {
+      if (isLeft) {
+        flipHorizontally();
+        isLeft = false;
+      }
     }
   }
 
@@ -111,60 +138,69 @@ class Monster extends SpriteAnimationGroupComponent
   void onCollisionStart(Set<Vector2> points, PositionComponent other) {
     if (other is Monster) {
       if (other.type != type) {
-        combat();
+        if (attackRangeBox.collidingWith(other.hitbox) && !withinAttackRange) {
+          withinAttackRange = true;
+          combat();
+        }
       }
     } else if (other is AttackBox) {
+      print('$type,$other');
       if (other.type != type) {
         hitPoint -= other.damage;
+        // print('$type,$hitPoint');
         other.removeAttackBox();
         if (hitPoint < 0) {
-          this.removeFromParent();
+          removeFromParent();
         }
       }
     }
   }
 
   @override
+  void onCollision(Set<Vector2> points, PositionComponent other) {
+    if (other is Monster && other.type != type) {
+      if (withinAttackRange) {
+        direction = Vector2(0, 0);
+      } else {
+        direction = (other.position - position).normalized();
+      }
+    }
+  }
+
+  @override
   void onCollisionEnd(PositionComponent other) {
-    if (other is DetectionBox) {
-      exitCombat();
+    //change this in the future (like the iscombat flag to be a list in future)
+    if (other is Monster) {
+      if (other.type != type) {
+        exitCombat();
+      }
     }
   }
 
   void wander(double delta) {
-    // Randomly change direction every second
     if (Random().nextInt(100) < 1) {
       final newX = Random().nextDouble() * 2 - 1;
-      if (direction.x > 0 && newX < 0) {
-        flipHorizontally();
-      } else if (direction.x < 0 && newX > 0) {
-        flipHorizontally();
-      }
       direction = Vector2(newX, 0);
     }
 
-    // Update position based on direction and speed
     position += direction * speed * delta;
 
     // Reverse direction if monster reaches screen edge
     if (position.x < 0) {
       direction = Vector2(1, 0);
-      flipHorizontally();
     } else if (position.x > gameRef.size.x) {
       // position = position.withX(gameRef.size.x);
       direction = Vector2(-1, 0);
-      flipHorizontally();
     }
   }
 
   late asyncTimer.Timer timer;
   void combat() async {
+    setCombatState(true);
     timer = asyncTimer.Timer.periodic(Duration(seconds: attackSpeed.toInt()),
         (timer) {
+      final attackBox = AttackBox(type);
       add(attackBox);
-      setCombatState(true);
-      print(type);
-      print(hitPoint);
     });
   }
 
