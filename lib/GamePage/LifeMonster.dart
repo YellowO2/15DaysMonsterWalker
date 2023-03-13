@@ -10,9 +10,9 @@ class LifeMonster extends Monster {
             attackSpeed: 1,
             attackNumber: 5,
             position: position);
-  @override
-  void wander(double delta) {
-    position += direction * speed * delta;
-    direction = Vector2(1, 0);
-  }
+  // @override
+  // void wander(double delta) {
+  //   position += direction * speed * delta;
+  //   direction = Vector2(1, 0);
+  // }
 }

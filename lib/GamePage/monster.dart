@@ -160,10 +160,10 @@ class Monster extends SpriteAnimationGroupComponent
   void onCollision(Set<Vector2> points, PositionComponent other) {
     if (other is Monster && other.type != type) {
       if (withinAttackRange) {
-        direction = Vector2(0, 0);
-      } else {
-        direction = (other.position - position).normalized();
+        // direction = Vector2(0, 0);
+        speed = 0.5;
       }
+      direction = (other.position - position).normalized();
     }
   }
 
@@ -172,15 +172,20 @@ class Monster extends SpriteAnimationGroupComponent
     //change this in the future (like the iscombat flag to be a list in future)
     if (other is Monster) {
       if (other.type != type) {
-        exitCombat();
+        if (attackRangeBox.collidingWith(other.hitbox)) {
+          print('ran');
+          exitCombat();
+        }
       }
     }
   }
 
   void wander(double delta) {
-    if (Random().nextInt(100) < 1) {
-      final newX = Random().nextDouble() * 2 - 1;
-      direction = Vector2(newX, 0);
+    if (!withinAttackRange) {
+      if (Random().nextInt(100) < 1) {
+        final newX = Random().nextDouble() * 2 - 1;
+        direction = Vector2(newX, 0);
+      }
     }
 
     position += direction * speed * delta;
