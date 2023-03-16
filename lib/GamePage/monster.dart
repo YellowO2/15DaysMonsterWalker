@@ -64,6 +64,11 @@ class Monster extends SpriteAnimationGroupComponent
   Vector2? attackRange;
   late AttackRangeBox attackRangeBox =
       AttackRangeBox(type: type, attackRange: attackRange);
+  final List<String> enemyInRange = [];
+  final Map priorityMap = {
+    'lifePlant': 1,
+    'lifeMonster': 0,
+  };
 
   Monster(
       {required this.type,
@@ -137,14 +142,8 @@ class Monster extends SpriteAnimationGroupComponent
   @override
   void onCollisionStart(Set<Vector2> points, PositionComponent other) {
     if (other is Monster) {
-      if (other.type != type) {
-        if (attackRangeBox.collidingWith(other.hitbox) && !withinAttackRange) {
-          withinAttackRange = true;
-          combat();
-        }
-      }
+      combat(other);
     } else if (other is AttackBox) {
-      print('$type,$other');
       if (other.type != type) {
         hitPoint -= other.damage;
         // print('$type,$hitPoint');
@@ -161,6 +160,7 @@ class Monster extends SpriteAnimationGroupComponent
     if (other is Monster && other.type != type) {
       if (withinAttackRange) {
         // direction = Vector2(0, 0);
+        print('witin at range');
         speed = 0.5;
       }
       direction = (other.position - position).normalized();
@@ -200,13 +200,29 @@ class Monster extends SpriteAnimationGroupComponent
   }
 
   late asyncTimer.Timer timer;
-  void combat() async {
-    setCombatState(true);
-    timer = asyncTimer.Timer.periodic(Duration(seconds: attackSpeed.toInt()),
-        (timer) {
-      final attackBox = AttackBox(type);
-      add(attackBox);
-    });
+  void combat(other) async {
+    var shouldAttack = true;
+    if (other.type != type) {
+      enemyInRange.forEach((enemy) {
+        if (priorityMap[enemy] > priorityMap[other.type]) {
+          print('change to flase');
+          shouldAttack = false;
+        }
+      });
+      enemyInRange.add(other.type);
+      if (attackRangeBox.collidingWith(other.hitbox) &&
+          !withinAttackRange &&
+          shouldAttack) {
+        print('attack');
+        withinAttackRange = true;
+        setCombatState(true);
+        timer = asyncTimer.Timer.periodic(
+            Duration(seconds: attackSpeed.toInt()), (timer) {
+          final attackBox = AttackBox(type);
+          add(attackBox);
+        });
+      }
+    }
   }
 
   void exitCombat() {

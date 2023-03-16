@@ -1,5 +1,6 @@
 import 'monster.dart';
 import 'package:flame/components.dart';
+import 'LifePlant.dart';
 
 class DeathMonster extends Monster {
   DeathMonster({String? monsterAnimationPath, Vector2? position})
@@ -19,5 +20,23 @@ class DeathMonster extends Monster {
   void wander(double delta) {
     position += direction * speed * delta;
     direction = Vector2(-1, 0);
+  }
+
+  @override
+  void onCollisionStart(Set<Vector2> points, PositionComponent other) {
+    if (other is LifePlant) {
+      super.combat(other);
+    }
+  }
+
+  @override
+  void onCollision(Set<Vector2> points, PositionComponent other) {
+    super.onCollision(points, other);
+    if (other is LifePlant) {
+      if (withinAttackRange) {
+        speed = 0.5;
+      }
+      direction = (other.position - position).normalized();
+    }
   }
 }

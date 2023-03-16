@@ -25,12 +25,12 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
         DeathMonster(position: Vector2(1100, 100));
     final GameBackground _gameBackground = GameBackground();
     final LifePlant _lifePlant = LifePlant();
-    final LifePlant _lifePlant2 = LifePlant(position: Vector2(1100, 100));
+    final LifePlant _lifePlant2 = LifePlant(position: Vector2(600, 100));
 
-    add(_lifeMonster);
+    // add(_lifeMonster);
     add(_deathMonster);
     add(_gameBackground);
-    add(_lifePlant);
+    // add(_lifePlant);
     add(_lifePlant2);
   }
 }
