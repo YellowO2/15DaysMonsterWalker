@@ -1,10 +1,9 @@
 import 'dart:math';
-import 'dart:async' as asyncTimer;
+import 'dart:async' as async_timer;
 
 import 'package:flame/components.dart';
 import 'game.dart';
 import 'package:flame/collisions.dart';
-import 'package:flutter/material.dart';
 
 class DetectionBox extends RectangleHitbox {
   final String type;
@@ -39,22 +38,26 @@ class AttackBox extends PositionComponent {
   RectangleHitbox hitBox =
       RectangleHitbox(size: Vector2(50, 20), position: Vector2(50, 50))
         ..collisionType = CollisionType.passive;
+
+  @override
   Future<void> onLoad() async {
+    super.onLoad();
     add(hitBox);
   }
 
   void removeAttackBox() {
-    this.removeFromParent();
+    removeFromParent();
   }
 }
 
 class Monster extends SpriteAnimationGroupComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {
+  int level;
   final String type;
   double speed = 100; // pixels per second
   Vector2 direction = Vector2(1, 0); // start moving right
   bool isLeft = false;
-  int hitPoint = 10;
+  int hitPoint;
   late DetectionBox detectBox = DetectionBox(type);
   RectangleHitbox hitbox = RectangleHitbox(size: Vector2(100, 100));
   double attackSpeed;
@@ -64,18 +67,20 @@ class Monster extends SpriteAnimationGroupComponent
   Vector2? attackRange;
   late AttackRangeBox attackRangeBox =
       AttackRangeBox(type: type, attackRange: attackRange);
-  final List<String> enemyInRange = [];
-  final Map priorityMap = {
-    'lifePlant': 1,
-    'lifeMonster': 0,
-  };
+  // final List<String> enemyInRange = [];
+  // final Map priorityMap = {
+  //   'lifePlant': 1,
+  //   'lifeMonster': 0,
+  // };
 
   Monster(
       {required this.type,
+      required this.level,
       required this.monsterAnimationPath,
       this.attackSpeed = 2,
       this.attackNumber = 2,
       this.attackRange,
+      this.hitPoint = 10,
       Vector2? position})
       : super(
             size: Vector2.all(100.0),
@@ -118,14 +123,14 @@ class Monster extends SpriteAnimationGroupComponent
     );
     animations = {1: runningAnimation, 2: runningAnimation, 3: attackAnimation};
     current = 1;
-    // position = gameRef.size / 2;
     position.y = game.groundLevel.toDouble() + 5.0;
   }
 
   @override
-  void update(double delta) {
-    super.update(delta);
-    wander(delta);
+  void update(double dt) {
+    super.update(dt);
+    level += 1;
+    wander(dt);
     if (direction.x < 0) {
       if (!isLeft) {
         flipHorizontally();
@@ -140,7 +145,9 @@ class Monster extends SpriteAnimationGroupComponent
   }
 
   @override
-  void onCollisionStart(Set<Vector2> points, PositionComponent other) {
+  void onCollisionStart(
+      Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollisionStart(intersectionPoints, other);
     if (other is Monster) {
       combat(other);
     } else if (other is AttackBox) {
@@ -156,31 +163,29 @@ class Monster extends SpriteAnimationGroupComponent
   }
 
   @override
-  void onCollision(Set<Vector2> points, PositionComponent other) {
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
     if (other is Monster && other.type != type) {
       if (withinAttackRange) {
-        // direction = Vector2(0, 0);
         print('witin at range');
         speed = 0.5;
       }
-      direction = (other.position - position).normalized();
+      direction = (other.center - center).normalized();
     }
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
     //change this in the future (like the iscombat flag to be a list in future)
     if (other is Monster) {
       if (other.type != type) {
-        if (attackRangeBox.collidingWith(other.hitbox)) {
-          print('ran');
-          exitCombat();
-        }
+        exitCombat();
       }
     }
   }
 
-  void wander(double delta) {
+  void wander(double dt) {
     if (!withinAttackRange) {
       if (Random().nextInt(100) < 1) {
         final newX = Random().nextDouble() * 2 - 1;
@@ -188,35 +193,31 @@ class Monster extends SpriteAnimationGroupComponent
       }
     }
 
-    position += direction * speed * delta;
+    position += direction * speed * dt;
 
     // Reverse direction if monster reaches screen edge
     if (position.x < 0) {
       direction = Vector2(1, 0);
     } else if (position.x > gameRef.size.x) {
-      // position = position.withX(gameRef.size.x);
       direction = Vector2(-1, 0);
     }
   }
 
-  late asyncTimer.Timer timer;
+  late async_timer.Timer timer;
   void combat(other) async {
-    var shouldAttack = true;
+    // var shouldAttack = true;
     if (other.type != type) {
-      enemyInRange.forEach((enemy) {
-        if (priorityMap[enemy] > priorityMap[other.type]) {
-          print('change to flase');
-          shouldAttack = false;
-        }
-      });
-      enemyInRange.add(other.type);
-      if (attackRangeBox.collidingWith(other.hitbox) &&
-          !withinAttackRange &&
-          shouldAttack) {
-        print('attack');
+      // enemyInRange.forEach((enemy) {
+      //   if (priorityMap[enemy] > priorityMap[other.type]) {
+      //     print('change to flase');
+      //     shouldAttack = false;
+      //   }
+      // });
+      // enemyInRange.add(other.type);
+      if (attackRangeBox.collidingWith(other.hitbox) && !withinAttackRange) {
         withinAttackRange = true;
         setCombatState(true);
-        timer = asyncTimer.Timer.periodic(
+        timer = async_timer.Timer.periodic(
             Duration(seconds: attackSpeed.toInt()), (timer) {
           final attackBox = AttackBox(type);
           add(attackBox);
@@ -226,7 +227,14 @@ class Monster extends SpriteAnimationGroupComponent
   }
 
   void exitCombat() {
+    print('exit combatr');
     setCombatState(false);
+    withinAttackRange = false;
     timer.cancel();
+    speed = 100;
+  }
+
+  String toJson() {
+    return {'level': level}.toString();
   }
 }
