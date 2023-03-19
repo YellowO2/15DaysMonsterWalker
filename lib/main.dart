@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'GamePage/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 void main() {
   runApp(const MainApp());
@@ -16,14 +17,29 @@ class MainApp extends StatefulWidget {
 class ExercisePage extends StatelessWidget {
   const ExercisePage({Key? key}) : super(key: key);
 
+  void saveMonster() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('monster', jsonEncode({'level': 5}));
+    print('saved');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Exercise'),
       ),
-      body: const Center(
-        child: Text('This is the exercise page'),
+      body: Center(
+        child: Column(
+          children: [
+            Text('This is the exercise page'),
+            ElevatedButton(
+                onPressed: () {
+                  saveMonster();
+                },
+                child: Text('press to level up'))
+          ],
+        ),
       ),
     );
   }

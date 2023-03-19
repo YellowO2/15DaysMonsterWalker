@@ -3,9 +3,9 @@ import 'components/health_bar.dart';
 import 'monster.dart';
 
 class LifeMonster extends Monster {
-  LifeMonster({Vector2? position})
+  LifeMonster({Vector2? position, required int level})
       : super(
-            level: 2,
+            level: level,
             type: 'LifeMonster',
             monsterAnimationPath: 'monsterNull',
             attackSpeed: 3,
@@ -18,6 +18,7 @@ class LifeMonster extends Monster {
   Future<void> onLoad() async {
     super.onLoad();
     add(healthBar);
+    print('my m level $level');
   }
 
   @override

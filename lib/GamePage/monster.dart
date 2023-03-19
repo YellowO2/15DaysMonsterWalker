@@ -129,7 +129,6 @@ class Monster extends SpriteAnimationGroupComponent
   @override
   void update(double dt) {
     super.update(dt);
-    level += 1;
     wander(dt);
     if (direction.x < 0) {
       if (!isLeft) {
@@ -234,7 +233,7 @@ class Monster extends SpriteAnimationGroupComponent
     speed = 100;
   }
 
-  String toJson() {
-    return {'level': level}.toString();
+  Map<String, dynamic> toJson() {
+    return {'level': level};
   }
 }

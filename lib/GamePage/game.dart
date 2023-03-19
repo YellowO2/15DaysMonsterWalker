@@ -5,6 +5,7 @@ import 'life_plant.dart';
 import 'death_monster.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async' as async_timer;
+import 'dart:convert';
 
 class MonsterGame extends FlameGame with HasCollisionDetection {
   MonsterGame();
@@ -17,29 +18,40 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
 
   void autoSave() async {
     async_timer.Timer.periodic(const Duration(seconds: 10), (timer) {
-      prefs.setString('monster', lifeMonster.toJson());
-      print('saved');
+      prefs.setString('monster', jsonEncode(lifeMonster.toJson()));
+      print('saved auto');
     });
   }
 
-  Future<String> getData() async {
+  Future<Map<String, dynamic>> getData() async {
+    late Map<String, dynamic> monster;
     prefs = await SharedPreferences.getInstance();
-    String monster = prefs.getString('monster') ?? 'no monster';
+    const defaultMonster = {'level': '3'};
+    String? monsterData = prefs.getString('monster');
+    if (monsterData != null) {
+      monster = jsonDecode(monsterData);
+    } else {
+      monster = defaultMonster;
+    }
+
     return monster;
   }
 
   @override
   Future<void> onLoad() async {
-    String monster = await getData();
+    Map<String, dynamic> monster = await getData();
     autoSave();
-    print(monster);
+    print("game $monster");
     await images.loadAll([
       'parallax-mountain-invert.png',
       'monsterNull.png',
       'lifePlant.png',
       'DeathMonster0.png'
     ]);
-    lifeMonster = LifeMonster(position: Vector2(400, 100));
+    lifeMonster = LifeMonster(
+      position: Vector2(400, 100),
+      level: monster['level'],
+    );
     final DeathMonster deathMonster =
         DeathMonster(position: Vector2(1100, 100));
     final GameBackground gameBackground = GameBackground();
