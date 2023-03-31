@@ -3,6 +3,7 @@ import 'game.dart';
 import 'package:flame/collisions.dart';
 import 'monster.dart';
 import 'components/health_bar.dart';
+import 'components/attackBox.dart';
 
 class LifePlant extends SpriteAnimationComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {

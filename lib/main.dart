@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'GamePage/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'ExcercisePage/index.dart';
 
 void main() {
   runApp(const MainApp());
@@ -14,44 +15,27 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-class ExercisePage extends StatelessWidget {
-  const ExercisePage({Key? key}) : super(key: key);
-
-  void saveMonster() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('monster', jsonEncode({'level': 5}));
-    print('saved');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exercise'),
-      ),
-      body: Center(
-        child: Column(
-          children: [
-            Text('This is the exercise page'),
-            ElevatedButton(
-                onPressed: () {
-                  saveMonster();
-                },
-                child: Text('press to level up'))
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _MainAppState extends State<MainApp> {
+  var hasBattle = false;
   int _selectedIndex = 0;
-  final List<Widget> _widgetOptions = <Widget>[
-    const GamePage(),
-    const ExercisePage()
-  ];
   late var monsterData;
+  var stepCount = 1;
+  bool hasGameEnd = false;
+
+  Widget renderPage() {
+    if (_selectedIndex == 0) {
+      return GamePage(
+        hasBattle: hasBattle,
+        setHasBattle: setHasBattle,
+        setGameEnd: setGameEnd,
+      );
+    } else {
+      return ExercisePage(
+        hasBattle: hasBattle,
+        setHasBattle: setHasBattle,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -59,24 +43,22 @@ class _MainAppState extends State<MainApp> {
     super.dispose();
   }
 
-  // Future<String> getData() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   String monster = await prefs.getString('monster') ?? 'no monster';
-  //   return monster;
-  // }
+  @override
+  void setGameEnd() {
+    hasGameEnd = true;
+  }
+
+  void setHasBattle(bool battle) {
+    setState(() {
+      hasBattle = battle;
+    });
+  }
 
   void saveData(String monsterData) async {
-    SharedPreferences.setMockInitialValues({});
+    // SharedPreferences.setMockInitialValues({});
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('monster', monsterData);
   }
-
-  // void loadMonster() async {
-  //   SharedPreferences.setMockInitialValues({});
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-  //   String monster = prefs.getString('monster') ?? 'no monster';
-  //   print(monster);
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -86,29 +68,40 @@ class _MainAppState extends State<MainApp> {
       });
     }
 
-    // loadMonster();
-
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+          // Define the default brightness and colors.
+          brightness: Brightness.dark,
+          primaryColor: Colors.lightBlue[800],
+          useMaterial3: true),
       home: Scaffold(
         body: Container(
-          child: _widgetOptions.elementAt(_selectedIndex),
+          child: hasGameEnd
+              ? renderPage()
+              : const Text(
+                  'game over',
+                  style: TextStyle(fontSize: 100),
+                ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: const Color.fromARGB(0, 251, 251, 251),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.amber[800],
-          onTap: onItemTapped,
-        ),
+        bottomNavigationBar: (!hasBattle || _selectedIndex == 1)
+            ? BottomNavigationBar(
+                backgroundColor: const Color.fromARGB(0, 251, 251, 251),
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings),
+                    label: 'Settings',
+                  ),
+                ],
+                currentIndex: _selectedIndex,
+                selectedItemColor: Colors.amber[800],
+                onTap: onItemTapped,
+              )
+            : null,
       ),
     );
   }

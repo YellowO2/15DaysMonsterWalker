@@ -10,6 +10,8 @@ dependencies:
   flame: ^1.6.0
   flutter:
     sdk: flutter
+  pedometer: ^3.0.0
+  permission_handler: ^10.2.0
   shared_preferences: ^2.0.18
 
 dev_dependencies:

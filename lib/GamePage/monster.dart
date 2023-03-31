@@ -4,6 +4,7 @@ import 'dart:async' as async_timer;
 import 'package:flame/components.dart';
 import 'game.dart';
 import 'package:flame/collisions.dart';
+import 'components/attackBox.dart';
 
 class DetectionBox extends RectangleHitbox {
   final String type;
@@ -20,8 +21,8 @@ class DetectionBox extends RectangleHitbox {
 
 class AttackRangeBox extends RectangleHitbox {
   final String type;
-  AttackRangeBox({required this.type, Vector2? attackRange})
-      : super(size: attackRange ?? Vector2(50, 50));
+  AttackRangeBox({required this.type, required Vector2 attackRange})
+      : super(size: attackRange);
 
   @override
   Future<void> onLoad() async {
@@ -31,30 +32,11 @@ class AttackRangeBox extends RectangleHitbox {
   }
 }
 
-class AttackBox extends PositionComponent {
-  AttackBox(this.type);
-  final String type;
-  final int damage = 1;
-  RectangleHitbox hitBox =
-      RectangleHitbox(size: Vector2(50, 20), position: Vector2(50, 50))
-        ..collisionType = CollisionType.passive;
-
-  @override
-  Future<void> onLoad() async {
-    super.onLoad();
-    add(hitBox);
-  }
-
-  void removeAttackBox() {
-    removeFromParent();
-  }
-}
-
 class Monster extends SpriteAnimationGroupComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {
   int level;
   final String type;
-  double speed = 100; // pixels per second
+  double speed = 40; // pixels per second
   Vector2 direction = Vector2(1, 0); // start moving right
   bool isLeft = false;
   int hitPoint;
@@ -63,15 +45,10 @@ class Monster extends SpriteAnimationGroupComponent
   double attackSpeed;
   int attackNumber;
   final String monsterAnimationPath;
-  bool withinAttackRange = false;
+  int withinAttackRange = 0;
   Vector2? attackRange;
   late AttackRangeBox attackRangeBox =
-      AttackRangeBox(type: type, attackRange: attackRange);
-  // final List<String> enemyInRange = [];
-  // final Map priorityMap = {
-  //   'lifePlant': 1,
-  //   'lifeMonster': 0,
-  // };
+      AttackRangeBox(type: type, attackRange: attackRange ?? Vector2(60, 50));
 
   Monster(
       {required this.type,
@@ -152,31 +129,33 @@ class Monster extends SpriteAnimationGroupComponent
     } else if (other is AttackBox) {
       if (other.type != type) {
         hitPoint -= other.damage;
-        // print('$type,$hitPoint');
         other.removeAttackBox();
         if (hitPoint < 0) {
-          removeFromParent();
+          onDefeat();
         }
       }
     }
+  }
+
+  void onDefeat() {
+    removeFromParent();
   }
 
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
     if (other is Monster && other.type != type) {
-      if (withinAttackRange) {
-        print('witin at range');
+      if (withinAttackRange > 0) {
         speed = 0.5;
       }
-      direction = (other.center - center).normalized();
+      final difference = (other.center - center).normalized();
+      direction.x = difference.x;
     }
   }
 
   @override
   void onCollisionEnd(PositionComponent other) {
     super.onCollisionEnd(other);
-    //change this in the future (like the iscombat flag to be a list in future)
     if (other is Monster) {
       if (other.type != type) {
         exitCombat();
@@ -185,7 +164,8 @@ class Monster extends SpriteAnimationGroupComponent
   }
 
   void wander(double dt) {
-    if (!withinAttackRange) {
+    if (withinAttackRange <= 0) {
+      print('not trig');
       if (Random().nextInt(100) < 1) {
         final newX = Random().nextDouble() * 2 - 1;
         direction = Vector2(newX, 0);
@@ -206,31 +186,34 @@ class Monster extends SpriteAnimationGroupComponent
   void combat(other) async {
     // var shouldAttack = true;
     if (other.type != type) {
-      // enemyInRange.forEach((enemy) {
-      //   if (priorityMap[enemy] > priorityMap[other.type]) {
-      //     print('change to flase');
-      //     shouldAttack = false;
-      //   }
-      // });
-      // enemyInRange.add(other.type);
-      if (attackRangeBox.collidingWith(other.hitbox) && !withinAttackRange) {
-        withinAttackRange = true;
-        setCombatState(true);
-        timer = async_timer.Timer.periodic(
-            Duration(seconds: attackSpeed.toInt()), (timer) {
-          final attackBox = AttackBox(type);
-          add(attackBox);
-        });
+      if (attackRangeBox.collidingWith(other.hitbox)) {
+        withinAttackRange += 1;
+        if (withinAttackRange == 1) {
+          //if first time enemy enter
+          setCombatState(true);
+          timer = async_timer.Timer.periodic(
+              Duration(seconds: attackSpeed.toInt()), (timer) {
+            final attackBox = AttackBox(type: type, direction: direction);
+            add(getAttack(attackBox));
+          });
+        }
       }
     }
   }
 
+  Component getAttack(Component attackBox) {
+    return attackBox;
+  }
+
   void exitCombat() {
-    print('exit combatr');
-    setCombatState(false);
-    withinAttackRange = false;
-    timer.cancel();
-    speed = 100;
+    withinAttackRange -= 1;
+    if (withinAttackRange == 0) {
+      setCombatState(false);
+      timer.cancel();
+      speed = 100;
+    } else if (withinAttackRange < 0) {
+      withinAttackRange = 0;
+    }
   }
 
   Map<String, dynamic> toJson() {

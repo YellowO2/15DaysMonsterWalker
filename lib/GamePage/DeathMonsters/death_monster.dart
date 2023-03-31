@@ -1,19 +1,26 @@
 import 'package:flame/palette.dart';
 
-import 'monster.dart';
+import '../monster.dart';
 import 'package:flame/components.dart';
-import 'life_plant.dart';
-import 'components/health_bar.dart';
+import '../life_plant.dart';
+import '../components/health_bar.dart';
 
 class DeathMonster extends Monster {
-  DeathMonster({String? monsterAnimationPath, Vector2? position})
-      : super(
-            level: 1,
-            type: 'DeathMonster',
-            monsterAnimationPath: monsterAnimationPath ?? 'DeathMonster0',
-            attackSpeed: 1,
-            attackNumber: 3,
-            position: position);
+  void Function()? onMonsterDefeated;
+  DeathMonster({
+    String? monsterAnimationPath,
+    Vector2? position,
+    int? attackNumber,
+    double? attackRange,
+    this.onMonsterDefeated,
+  }) : super(
+          level: 1,
+          type: 'DeathMonster',
+          monsterAnimationPath: monsterAnimationPath ?? 'DeathMonster0',
+          attackSpeed: 1,
+          attackNumber: attackNumber ?? 3,
+          position: position,
+        );
   late HealthBar healthBar = HealthBar(
       maxHealth: hitPoint,
       health: hitPoint,
@@ -44,10 +51,11 @@ class DeathMonster extends Monster {
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
     if (other is LifePlant) {
-      if (withinAttackRange) {
+      if (withinAttackRange > 0) {
         speed = 0.5;
       }
-      direction = (other.position - position).normalized();
+      final difference = (other.center - center).normalized();
+      direction.x = difference.x;
     }
   }
 
@@ -58,6 +66,15 @@ class DeathMonster extends Monster {
     if (other is LifePlant) {
       exitCombat();
     }
+  }
+
+  @override
+  void onRemove() {
+    if (onMonsterDefeated != null) {
+      onMonsterDefeated!();
+    }
+
+    super.onRemove();
   }
 
   @override
