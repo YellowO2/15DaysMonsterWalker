@@ -77,7 +77,7 @@ class _MainAppState extends State<MainApp> {
           useMaterial3: true),
       home: Scaffold(
         body: Container(
-          child: hasGameEnd
+          child: !hasGameEnd
               ? renderPage()
               : const Text(
                   'game over',

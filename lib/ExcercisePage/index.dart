@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -23,6 +25,7 @@ class _ExercisePageState extends State<ExercisePage> {
   late int prevStep = 0;
   bool firstInit = true;
   bool shouldSetPrev = false;
+  bool firstBattle = true;
 
   @override
   void initState() {
@@ -132,12 +135,15 @@ class _ExercisePageState extends State<ExercisePage> {
                         color: Colors.yellow),
                   )
                 : SizedBox(),
-            (_steps > 6000)
+            (_steps > 6000 && firstBattle)
                 ? Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: ElevatedButton(
                       onPressed: () {
                         // saveMonster();
+                        setState(() {
+                          firstBattle = false;
+                        });
                         widget.setHasBattle(true);
                       },
                       child: const Text(

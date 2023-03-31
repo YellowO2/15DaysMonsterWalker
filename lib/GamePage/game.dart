@@ -83,8 +83,8 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
     hasBattle = true;
     enemyCount += 1;
     final randNo = Random().nextInt(3);
-    DeathMonster newMonster =
-        DeathMonster(onMonsterDefeated: onMonsterDefeated);
+    DeathMonster newMonster = DeathMonster(
+        onMonsterDefeated: onMonsterDefeated, position: Vector2(800, 100));
     ;
     if (randNo == 0) {
       newMonster = LazerSpirit(Vector2(800, 100), onMonsterDefeated);
@@ -92,7 +92,7 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
       newMonster = DeathMonster(onMonsterDefeated: onMonsterDefeated);
     } else if (randNo == 2) {
       newMonster = MutatedBat(
-          onMonsterDefeated: onMonsterDefeated, position: Vector2(800, 100));
+          onMonsterDefeated: onMonsterDefeated, position: Vector2(800, 60));
     }
 
     //MutatedBat(Vector2(1000, 100));
