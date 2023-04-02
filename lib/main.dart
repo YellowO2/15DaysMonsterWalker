@@ -43,7 +43,6 @@ class _MainAppState extends State<MainApp> {
     super.dispose();
   }
 
-  @override
   void setGameEnd() {
     hasGameEnd = true;
   }

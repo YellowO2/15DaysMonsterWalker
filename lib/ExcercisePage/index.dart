@@ -24,7 +24,6 @@ class _ExercisePageState extends State<ExercisePage> {
   late int _steps = 0;
   late int prevStep = 0;
   bool firstInit = true;
-  bool shouldSetPrev = false;
   bool firstBattle = true;
 
   @override
@@ -46,12 +45,6 @@ class _ExercisePageState extends State<ExercisePage> {
   }
 
   void onStepCount(StepCount event) {
-    if (firstInit && shouldSetPrev) {
-      setState(() {
-        prevStep = event.steps;
-      });
-    }
-
     setState(() {
       firstInit = false;
       _steps = event.steps - prevStep;
@@ -66,36 +59,36 @@ class _ExercisePageState extends State<ExercisePage> {
   }
 
   void setPrevStep() async {
-    //reset step count if new day
-    const String lastResetDateKey = 'last_reset_date';
-    DateTime lastResetDate = DateTime.now();
-
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    final lastResetDateString = prefs.getString(lastResetDateKey);
-    if (lastResetDateString != null) {
-      lastResetDate = DateTime.parse(lastResetDateString);
-    }
-    final now = DateTime.now();
-    if (lastResetDate.isBefore(DateTime(now.year, now.month, now.day))) {
-      setState(() {
-        shouldSetPrev = true;
-      });
-      lastResetDate = now;
-      await prefs.setString(lastResetDateKey, lastResetDate.toIso8601String());
-    }
+    final prevDayStep = prefs.getInt('prevDayStep');
+    setState(() {
+      prevStep = prevDayStep ?? 0;
+    });
   }
 
   void initPlatformState() async {
     var status = await Permission.activityRecognition.status;
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     if (status.isDenied) {
       await Permission.activityRecognition.request();
     } else {
       _stepCountStream = Pedometer.stepCountStream;
+      StepCount lastStep = await _stepCountStream.first;
+
+      final now = DateTime.now();
+      DateTime prevDay;
+      String? prevDateString = prefs.getString('prevDate');
+      if (prevDateString == null) {
+        prefs.setInt('prevDayStep', lastStep.steps);
+      } else {
+        prevDay = DateTime.parse(prevDateString);
+        if (prevDay.isBefore(DateTime(now.year, now.month, now.day))) {
+          prefs.setInt('prevDayStep', lastStep.steps);
+        }
+      }
+      prefs.setString('prevDate', now.toString());
       _stepCountStream.listen(onStepCount).onError(onStepCountError);
     }
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream.listen(onStepCount).onError(onStepCountError);
     setPrevStep();
     if (!mounted) return;
   }
@@ -110,7 +103,7 @@ class _ExercisePageState extends State<ExercisePage> {
         child: Column(
           children: [
             const Text(
-              'Target: 5000',
+              'Target: 6000',
               style: TextStyle(fontSize: 30),
             ),
             const Text(

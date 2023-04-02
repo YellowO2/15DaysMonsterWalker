@@ -165,7 +165,6 @@ class Monster extends SpriteAnimationGroupComponent
 
   void wander(double dt) {
     if (withinAttackRange <= 0) {
-      print('not trig');
       if (Random().nextInt(100) < 1) {
         final newX = Random().nextDouble() * 2 - 1;
         direction = Vector2(newX, 0);
