@@ -1,8 +1,6 @@
-import 'package:flame/text.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:lifemon/GamePage/game.dart';
-import 'dart:math';
 import 'UI/traitSelection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -48,7 +46,7 @@ class _GamePageState extends State<GamePage> {
       startDate = DateTime.parse(startDateString);
     }
     setState(() {
-      currentDate = DateTime.now().difference(startDate).inDays;
+      currentDate = DateTime.now().difference(startDate).inDays + 2;
     });
 
     if (monsterData != null && monsterData != '') {
@@ -116,6 +114,13 @@ class _GamePageState extends State<GamePage> {
           Text(
             'Day $currentDate',
             style: const TextStyle(fontSize: 30, color: Colors.black38),
+          ),
+          const Positioned(
+            right: 2,
+            child: Text(
+              'Final Day: 15',
+              style: TextStyle(fontSize: 30, color: Colors.black38),
+            ),
           )
         ]),
         Text(
@@ -182,16 +187,6 @@ class _GamePageState extends State<GamePage> {
         //     ],
         //   ),
         // ),
-        //yux remove this
-        TextButton(
-          onPressed: () {
-            _game.spawnMonsters();
-            setState(() {
-              hasBattleStart = true;
-            });
-          },
-          child: Text('Start battle!'),
-        ),
         widget.hasBattle && !hasBattleStart
             ? TextButton(
                 onPressed: () {
@@ -202,7 +197,7 @@ class _GamePageState extends State<GamePage> {
                 },
                 child: Text('Start battle!'),
               )
-            : SizedBox.shrink(),
+            : const SizedBox.shrink(),
       ],
     );
   }

@@ -1,5 +1,4 @@
 import 'package:flame/game.dart';
-import 'components/health_bar.dart';
 import 'monster.dart';
 
 class LifeMonster extends Monster {
@@ -18,22 +17,11 @@ class LifeMonster extends Monster {
             position: position,
             hitPoint: 15,
             traits: traits);
-  late HealthBar healthBar = HealthBar(maxHealth: hitPoint, health: hitPoint);
-
-  @override
-  Future<void> onLoad() async {
-    super.onLoad();
-  }
 
   @override
   void update(double dt) {
     super.update(dt);
     healthBar.health = hitPoint;
-  }
-
-  @override
-  Map<String, dynamic> toJson() {
-    return {'level': level};
   }
 
   void levelUp() {

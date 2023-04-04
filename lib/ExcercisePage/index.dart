@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'dart:async';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -19,8 +16,6 @@ class ExercisePage extends StatefulWidget {
 
 class _ExercisePageState extends State<ExercisePage> {
   late Stream<StepCount> _stepCountStream;
-  late Stream<PedestrianStatus> _pedestrianStatusStream;
-  late String _status = '?';
   late int _steps = 0;
   late int prevStep = 0;
   bool firstInit = true;
@@ -32,29 +27,10 @@ class _ExercisePageState extends State<ExercisePage> {
     initPlatformState();
   }
 
-  void onPedestrianStatusChanged(PedestrianStatus event) {
-    setState(() {
-      _status = event.status;
-    });
-  }
-
-  void onPedestrianStatusError(error) {
-    setState(() {
-      _status = 'Pedestrian Status not available';
-    });
-  }
-
   void onStepCount(StepCount event) {
     setState(() {
       firstInit = false;
-      _steps = event.steps - prevStep;
-    });
-  }
-
-  void onStepCountError(error) {
-    print('onStepCountError: $error');
-    setState(() {
-      _status = 'Error';
+      _steps = 6021;
     });
   }
 
@@ -82,12 +58,12 @@ class _ExercisePageState extends State<ExercisePage> {
         prefs.setInt('prevDayStep', lastStep.steps);
       } else {
         prevDay = DateTime.parse(prevDateString);
-        if (prevDay.isBefore(DateTime(now.year, now.month, now.day))) {
+        if (prevDay.isBefore(DateTime(now.year, now.month, now.day + 1))) {
           prefs.setInt('prevDayStep', lastStep.steps);
         }
       }
       prefs.setString('prevDate', now.toString());
-      _stepCountStream.listen(onStepCount).onError(onStepCountError);
+      _stepCountStream.listen(onStepCount);
     }
     setPrevStep();
     if (!mounted) return;
@@ -112,7 +88,7 @@ class _ExercisePageState extends State<ExercisePage> {
             ),
             Text(
               _steps.toString(),
-              style: TextStyle(fontSize: 60),
+              style: const TextStyle(fontSize: 60),
             ),
             const Divider(
               height: 100,
@@ -127,7 +103,7 @@ class _ExercisePageState extends State<ExercisePage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.yellow),
                   )
-                : SizedBox(),
+                : const SizedBox(),
             (_steps > 6000 && firstBattle)
                 ? Padding(
                     padding: const EdgeInsets.all(20.0),
@@ -148,7 +124,7 @@ class _ExercisePageState extends State<ExercisePage> {
                       ),
                     ),
                   )
-                : SizedBox(),
+                : const SizedBox(),
           ],
         ),
       ),

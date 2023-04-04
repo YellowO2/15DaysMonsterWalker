@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
 
 class HealthBar extends RectangleComponent {
-  var health;
+  int health;
   final int maxHealth;
   final Paint? healthBarColor;
 

@@ -92,7 +92,7 @@ class _MainAppState extends State<MainApp> {
                     label: 'Home',
                   ),
                   BottomNavigationBarItem(
-                    icon: Icon(Icons.settings),
+                    icon: Icon(Icons.directions_run),
                     label: 'Settings',
                   ),
                 ],

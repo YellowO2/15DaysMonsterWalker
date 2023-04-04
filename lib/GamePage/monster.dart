@@ -110,7 +110,6 @@ class Monster extends SpriteAnimationGroupComponent
     current = 1;
     position.y = game.groundLevel.toDouble() + 5.0;
     loadTraits();
-    print('monster hp $hitPoint');
   }
 
   @override
@@ -183,7 +182,6 @@ class Monster extends SpriteAnimationGroupComponent
         }
       }
     }
-    print('monster trait loaded$traits');
   }
 
   void addTrait(String trait) {
@@ -201,7 +199,6 @@ class Monster extends SpriteAnimationGroupComponent
         break;
     }
     traits = [trait, ...traits!];
-    print('new hp $hitPoint');
   }
 
   @override

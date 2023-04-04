@@ -11,6 +11,7 @@ class MutatedBat extends DeathMonster {
             attackNumber: 6,
             position: position,
             attackRange: 320,
+            hitPoint: 6,
             onMonsterDefeated: onMonsterDefeated);
 
   @override

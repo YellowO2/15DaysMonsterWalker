@@ -15,7 +15,7 @@ class AttackBox extends SpriteAnimationComponent with HasGameRef<MonsterGame> {
   final String? animationPath;
   final double speed;
   final int damage;
-  late final fadeAnimation;
+  late SpriteAnimation? fadeAnimation;
   RectangleHitbox hitBox = RectangleHitbox(
     size: Vector2(60, 20),
     position: Vector2(50, 50),
@@ -52,7 +52,6 @@ class AttackBox extends SpriteAnimationComponent with HasGameRef<MonsterGame> {
 
   @override
   void update(double dt) {
-    // TODO: implement update
     super.update(dt);
     if (direction != null) {
       position -= direction! * speed;

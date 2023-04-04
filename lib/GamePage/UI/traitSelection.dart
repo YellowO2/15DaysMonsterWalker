@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Random random = new Random();
+Random random = Random();
 final allTraits = [
   'hidden',
   'attack',
@@ -49,7 +49,7 @@ Widget renderTrait(
       onPressed: () {
         onPress(trait);
       },
-      icon: (empty != null) ? SizedBox() : renderIcon(trait),
+      icon: (empty != null) ? const SizedBox() : renderIcon(trait),
     ),
   );
 }
@@ -69,7 +69,7 @@ Column traitSelection(void Function(bool state) setShowTrait,
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       const Text(
-        'Level Up! Choose a skill',
+        'Level Up! Choose a trait',
         style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
       ),
       Container(
