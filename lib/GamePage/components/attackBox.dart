@@ -4,13 +4,17 @@ import '../game.dart';
 
 class AttackBox extends SpriteAnimationComponent with HasGameRef<MonsterGame> {
   AttackBox(
-      {required this.type, this.direction, this.speed = 0, this.animationPath})
+      {required this.type,
+      this.direction,
+      this.speed = 0,
+      this.animationPath,
+      required this.damage})
       : super(size: Vector2(64, 64));
   final String type;
   final Vector2? direction;
   final String? animationPath;
   final double speed;
-  final int damage = 1;
+  final int damage;
   late final fadeAnimation;
   RectangleHitbox hitBox = RectangleHitbox(
     size: Vector2(60, 20),

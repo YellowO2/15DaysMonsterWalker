@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'game.dart';
 import 'package:flame/collisions.dart';
 import 'components/attackBox.dart';
+import 'components/health_bar.dart';
 
 class DetectionBox extends RectangleHitbox {
   final String type;
@@ -34,6 +35,7 @@ class AttackRangeBox extends RectangleHitbox {
 
 class Monster extends SpriteAnimationGroupComponent
     with HasGameRef<MonsterGame>, CollisionCallbacks {
+  late List<String>? traits = [];
   int level;
   final String type;
   double speed = 40; // pixels per second
@@ -49,17 +51,22 @@ class Monster extends SpriteAnimationGroupComponent
   Vector2? attackRange;
   late AttackRangeBox attackRangeBox =
       AttackRangeBox(type: type, attackRange: attackRange ?? Vector2(60, 50));
+  late HealthBar healthBar = HealthBar(maxHealth: hitPoint, health: hitPoint);
+  bool recover = false;
+  int damage;
 
-  Monster(
-      {required this.type,
-      required this.level,
-      required this.monsterAnimationPath,
-      this.attackSpeed = 2,
-      this.attackNumber = 2,
-      this.attackRange,
-      this.hitPoint = 10,
-      Vector2? position})
-      : super(
+  Monster({
+    required this.type,
+    required this.level,
+    required this.monsterAnimationPath,
+    this.attackSpeed = 2,
+    this.attackNumber = 2,
+    this.attackRange,
+    this.hitPoint = 10,
+    this.traits,
+    this.damage = 1,
+    Vector2? position,
+  }) : super(
             size: Vector2.all(100.0),
             anchor: Anchor.center,
             position: position);
@@ -78,6 +85,7 @@ class Monster extends SpriteAnimationGroupComponent
     add(detectBox);
     add(hitbox);
     add(attackRangeBox);
+    add(healthBar);
 
     final running = await gameRef.images.load('$monsterAnimationPath.png');
     final attack =
@@ -101,6 +109,8 @@ class Monster extends SpriteAnimationGroupComponent
     animations = {1: runningAnimation, 2: runningAnimation, 3: attackAnimation};
     current = 1;
     position.y = game.groundLevel.toDouble() + 5.0;
+    loadTraits();
+    print('monster hp $hitPoint');
   }
 
   @override
@@ -129,6 +139,11 @@ class Monster extends SpriteAnimationGroupComponent
     } else if (other is AttackBox) {
       if (other.type != type) {
         hitPoint -= other.damage;
+        if (recover) {
+          if (Random().nextDouble() > 0.80) {
+            hitPoint += 1;
+          }
+        }
         other.removeAttackBox();
         if (hitPoint < 0) {
           onDefeat();
@@ -139,6 +154,54 @@ class Monster extends SpriteAnimationGroupComponent
 
   void onDefeat() {
     removeFromParent();
+  }
+
+  void loadTraits() {
+    if (traits != null) {
+      for (String trait in traits!) {
+        switch (trait) {
+          case 'hidden':
+            break;
+          case 'attack':
+            damage += 1;
+            break;
+          case 'recover':
+            recover = true;
+            break;
+          case 'health':
+            hitPoint += 3;
+            break;
+          case 'speed':
+            break;
+          case 'dodge':
+            break;
+          case 'attack time':
+            break;
+
+          default:
+            break;
+        }
+      }
+    }
+    print('monster trait loaded$traits');
+  }
+
+  void addTrait(String trait) {
+    switch (trait) {
+      case 'hidden':
+        break;
+      case 'attack':
+        break;
+      case 'recover':
+        break;
+      case 'health':
+        hitPoint += 100;
+        break;
+      default:
+        break;
+    }
+    traits = [trait, ...traits!];
+    print('new hp $hitPoint');
   }
 
   @override
@@ -192,7 +255,8 @@ class Monster extends SpriteAnimationGroupComponent
           setCombatState(true);
           timer = async_timer.Timer.periodic(
               Duration(seconds: attackSpeed.toInt()), (timer) {
-            final attackBox = AttackBox(type: type, direction: direction);
+            final attackBox =
+                AttackBox(type: type, direction: direction, damage: damage);
             add(getAttack(attackBox));
           });
         }

@@ -10,14 +10,17 @@ class MutatedBat extends DeathMonster {
             monsterAnimationPath: 'Mutated_Bat',
             attackNumber: 6,
             position: position,
-            attackRange: 400,
+            attackRange: 320,
             onMonsterDefeated: onMonsterDefeated);
 
   @override
   Component getAttack(Component attackBox) {
-    // TODO: implement getAttack
     final attackBox = AttackBox(
-        direction: direction, speed: 2, type: type, animationPath: 'darkBall');
+        direction: direction,
+        speed: 2,
+        type: type,
+        animationPath: 'darkBall',
+        damage: 1);
     return super.getAttack(attackBox);
   }
 }

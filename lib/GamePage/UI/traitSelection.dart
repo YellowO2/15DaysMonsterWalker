@@ -3,7 +3,15 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Random random = new Random();
-final allTraits = ['hidden', 'attack', 'recover', 'health'];
+final allTraits = [
+  'hidden',
+  'attack',
+  'recover',
+  'health',
+  'dodge',
+  'speed',
+  'attack time'
+];
 Widget renderIcon(String trait) {
   switch (trait) {
     case 'hidden':
@@ -14,6 +22,12 @@ Widget renderIcon(String trait) {
       return const Icon(Icons.health_and_safety);
     case 'health':
       return const Icon(Icons.favorite_border);
+    case 'dodge':
+      return const Icon(Icons.fullscreen_exit);
+    case 'speed':
+      return const Icon(Icons.directions_run);
+    case 'attack time':
+      return const Icon(Icons.timer);
     default:
       return const Icon(Icons.help_center);
   }
@@ -24,7 +38,7 @@ Widget renderTrait(
     double? size,
     bool? empty,
     String? traitValue}) {
-  final trait = traitValue ?? allTraits[random.nextInt(4)];
+  final trait = traitValue ?? allTraits[random.nextInt(7)];
   return Container(
     margin: const EdgeInsets.all(10),
     decoration: const BoxDecoration(

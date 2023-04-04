@@ -21,32 +21,45 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
-  late final MonsterGame _game;
+  late MonsterGame _game;
   bool hasBattleStart = false;
   bool showTraitChoice = false;
   late int level = 1;
   late List<String> traits = [];
+  late int currentDate = 1;
 
   @override
   void initState() {
     super.initState();
-    _game =
-        MonsterGame(widget.setHasBattle, levelUp, traits, widget.setGameEnd);
-    getLevel();
+    _game = MonsterGame(widget.setHasBattle, levelUp, widget.setGameEnd);
+    setGame();
   }
 
-  void getLevel() async {
+  void setGame() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? monsterData = prefs.getString('monster');
     final trait = prefs.getStringList('trait') ?? [];
+    //set start day
+    DateTime startDate = DateTime.now();
+    final startDateString = prefs.getString('startDate');
+    if (startDateString == null) {
+      await prefs.setString('startDate', DateTime.now().toString());
+    } else {
+      startDate = DateTime.parse(startDateString);
+    }
+    setState(() {
+      currentDate = DateTime.now().difference(startDate).inDays;
+    });
 
-    if (monsterData != null) {
+    if (monsterData != null && monsterData != '') {
       final Map<String, dynamic> monster = jsonDecode(monsterData);
       setState(() {
         level = monster['level'];
-        traits = trait;
       });
     }
+    setState(() {
+      traits = trait;
+    });
   }
 
   void levelUp() {
@@ -60,6 +73,7 @@ class _GamePageState extends State<GamePage> {
 
   void addTrait(String newTrait) {
     traits = [newTrait, ...traits];
+    _game.addTrait(newTrait);
   }
 
   void setShowTrait(bool state) {
@@ -99,6 +113,10 @@ class _GamePageState extends State<GamePage> {
                   : null,
             ),
           ),
+          Text(
+            'Day $currentDate',
+            style: const TextStyle(fontSize: 30, color: Colors.black38),
+          )
         ]),
         Text(
           'Level: $level',
@@ -164,6 +182,16 @@ class _GamePageState extends State<GamePage> {
         //     ],
         //   ),
         // ),
+        //yux remove this
+        TextButton(
+          onPressed: () {
+            _game.spawnMonsters();
+            setState(() {
+              hasBattleStart = true;
+            });
+          },
+          child: Text('Start battle!'),
+        ),
         widget.hasBattle && !hasBattleStart
             ? TextButton(
                 onPressed: () {

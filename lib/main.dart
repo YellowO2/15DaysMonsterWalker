@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'GamePage/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'ExcercisePage/index.dart';
 
 void main() {
@@ -44,7 +43,9 @@ class _MainAppState extends State<MainApp> {
   }
 
   void setGameEnd() {
-    hasGameEnd = true;
+    setState(() {
+      hasGameEnd = true;
+    });
   }
 
   void setHasBattle(bool battle) {
@@ -54,7 +55,6 @@ class _MainAppState extends State<MainApp> {
   }
 
   void saveData(String monsterData) async {
-    // SharedPreferences.setMockInitialValues({});
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('monster', monsterData);
   }

@@ -11,7 +11,7 @@ import 'DeathMonsters/mutatedBat.dart';
 import 'dart:math';
 
 class MonsterGame extends FlameGame with HasCollisionDetection {
-  MonsterGame(this.setHasBattle, this.levelUp, this.traits, this.setGameEnd);
+  MonsterGame(this.setHasBattle, this.levelUp, this.setGameEnd);
   final groundLevel = 230;
   late SharedPreferences prefs;
   late LifeMonster lifeMonster;
@@ -20,10 +20,13 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
   void Function() levelUp;
   int enemyCount = 0;
   bool hasBattle = false;
-  late List<String> traits;
+  // late int currentDate;
+  @override
+  // TODO: implement debugMode
+  bool get debugMode => true;
 
   void autoSave() async {
-    async_timer.Timer.periodic(const Duration(seconds: 10), (timer) {
+    async_timer.Timer.periodic(const Duration(seconds: 160), (timer) {
       prefs.setString('monster', jsonEncode(lifeMonster.toJson()));
     });
   }
@@ -35,7 +38,7 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
       'level': 0,
     };
     String? monsterData = prefs.getString('monster');
-    if (monsterData != null) {
+    if (monsterData != null && monsterData != '') {
       monster = jsonDecode(monsterData);
     } else {
       monster = defaultMonster;
@@ -44,8 +47,20 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
     return monster;
   }
 
+  void resetMonster() async {
+    prefs = await SharedPreferences.getInstance();
+    prefs.setString('monster', '');
+  }
+
+  void setGameEndAndResetMonster() {
+    resetMonster();
+    setGameEnd();
+  }
+
   @override
   Future<void> onLoad() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final traitsData = prefs.getStringList('trait') ?? [];
     Map<String, dynamic> monster = await getData();
     autoSave();
     print("game $monster");
@@ -58,10 +73,8 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
     lifeMonster = LifeMonster(
         position: Vector2(400, 100),
         level: monster['level'],
-        traits: traits,
-        onMonsterDefeated: setGameEnd);
-    final DeathMonster deathMonster =
-        DeathMonster(position: Vector2(1100, 100));
+        traits: traitsData,
+        onMonsterDefeated: setGameEndAndResetMonster);
     final GameBackground gameBackground = GameBackground();
     final LifePlant lifePlant = LifePlant();
     final LifePlant lifePlant2 = LifePlant(position: Vector2(600, 100));
@@ -84,21 +97,17 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
     enemyCount += 1;
     final randNo = Random().nextInt(3);
     DeathMonster newMonster = DeathMonster(
-        onMonsterDefeated: onMonsterDefeated, position: Vector2(800, 100));
-    ;
+        onMonsterDefeated: onMonsterDefeated, position: Vector2(1100, 100));
     if (randNo == 0) {
-      newMonster = LazerSpirit(Vector2(800, 100), onMonsterDefeated);
+      newMonster = LazerSpirit(Vector2(1100, 100), onMonsterDefeated);
     } else if (randNo == 1) {
-      newMonster = DeathMonster(onMonsterDefeated: onMonsterDefeated);
+      newMonster = DeathMonster(
+          position: Vector2(1100, 100), onMonsterDefeated: onMonsterDefeated);
     } else if (randNo == 2) {
       newMonster = MutatedBat(
-          onMonsterDefeated: onMonsterDefeated, position: Vector2(800, 60));
+          onMonsterDefeated: onMonsterDefeated, position: Vector2(1100, 60));
     }
-
-    //MutatedBat(Vector2(1000, 100));
-    if (newMonster != null) {
-      add(newMonster);
-    }
+    add(newMonster);
   }
 
   @override
@@ -116,5 +125,9 @@ class MonsterGame extends FlameGame with HasCollisionDetection {
   @override
   void onRemove() {
     super.onRemove();
+  }
+
+  void addTrait(String newTrait) {
+    lifeMonster.addTrait(newTrait);
   }
 }

@@ -1,9 +1,6 @@
-import 'package:flame/palette.dart';
-
 import '../monster.dart';
 import 'package:flame/components.dart';
 import '../life_plant.dart';
-import '../components/health_bar.dart';
 
 class DeathMonster extends Monster {
   void Function()? onMonsterDefeated;
@@ -20,16 +17,12 @@ class DeathMonster extends Monster {
           attackSpeed: 1,
           attackNumber: attackNumber ?? 3,
           position: position,
+          attackRange: Vector2(attackRange ?? 60, 50),
         );
-  late HealthBar healthBar = HealthBar(
-      maxHealth: hitPoint,
-      health: hitPoint,
-      healthBarColor: BasicPalette.black.paint());
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    add(healthBar);
   }
 
   @override
